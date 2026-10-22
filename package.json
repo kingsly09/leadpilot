@@ -1,0 +1,11 @@
+{
+  "name": "leadpilot",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:api": "npm run dev -w @leadpilot/api",
+    "db:migrate": "npm run db:migrate -w @leadpilot/api",
+    "db:seed": "npm run db:seed -w @leadpilot/api",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

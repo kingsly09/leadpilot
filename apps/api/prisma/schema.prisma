@@ -1,0 +1,212 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  VIEWER
+}
+
+enum Channel {
+  web
+  facebook
+  instagram
+  linkedin
+  whatsapp
+  email
+}
+
+enum LeadTier {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  MEETING_BOOKED
+  WON
+  LOST
+}
+
+enum MessageRole {
+  user
+  assistant
+  human_agent
+  system
+}
+
+enum ActionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+  FAILED
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String
+  passwordHash  String
+  role          Role            @default(AGENT)
+  createdAt     DateTime        @default(now())
+  assignedLeads Lead[]
+  approvals     PendingAction[] @relation("approver")
+  auditLogs     AuditLog[]
+}
+
+model Contact {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?
+  phone         String?
+  /// e.g. { "facebook": "PSID123", "instagram": "IGSID456" }
+  channelIds    Json           @default("{}")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  leads         Lead[]
+  conversations Conversation[]
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  contactId    String
+  contact      Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  source       Channel
+  score        Int        @default(0)
+  tier         LeadTier   @default(COLD)
+  status       LeadStatus @default(NEW)
+  /// Facts extracted by the AI: budget, timeline, need, ...
+  fields       Json       @default("{}")
+  assignedToId String?
+  assignedTo   User?      @relation(fields: [assignedToId], references: [id])
+  /// Idempotency key from the platform (e.g. Meta leadgen_id)
+  externalId   String?    @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([tier, status])
+}
+
+model Conversation {
+  id               String    @id @default(cuid())
+  contactId        String
+  contact          Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  channel          Channel
+  externalThreadId String?
+  /// false = a human has taken over; AI stays silent
+  aiEnabled        Boolean   @default(true)
+  lastMessageAt    DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  messages         Message[]
+
+  @@unique([channel, externalThreadId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  /// Structured TurnResult from the LLM, when role = assistant
+  meta           Json?
+  tokensIn       Int?
+  tokensOut      Int?
+  createdAt      DateTime     @default(now())
+  toolCalls      ToolCall[]
+
+  @@index([conversationId, createdAt])
+}
+
+model ToolCall {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  tool      String
+  input     Json
+  output    Json?
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model PendingAction {
+  id           String       @id @default(cuid())
+  tool         String
+  payload      Json
+  reason       String?
+  status       ActionStatus @default(PENDING)
+  approvedById String?
+  approvedBy   User?        @relation("approver", fields: [approvedById], references: [id])
+  result       Json?
+  createdAt    DateTime     @default(now())
+  decidedAt    DateTime?
+}
+
+model WorkflowRun {
+  id         String    @id @default(cuid())
+  workflow   String
+  event      String
+  payload    Json
+  status     RunStatus @default(RUNNING)
+  error      String?
+  attempts   Int       @default(1)
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+}
+
+model KbDocument {
+  id        String    @id @default(cuid())
+  title     String
+  source    String?
+  createdAt DateTime  @default(now())
+  chunks    KbChunk[]
+}
+
+model KbChunk {
+  id         String                       @id @default(cuid())
+  documentId String
+  document   KbDocument                   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String
+  embedding  Unsupported("vector(1536)")?
+}
+
+model Integration {
+  id              String    @id @default(cuid())
+  provider        String    @unique
+  /// Encrypted OAuth tokens — never sent to the LLM
+  encryptedTokens String
+  scopes          String[]
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+}
