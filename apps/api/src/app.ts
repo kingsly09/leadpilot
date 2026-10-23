@@ -10,6 +10,7 @@ import { authRoutes } from "./routes/auth.js";
 import { leadRoutes } from "./routes/leads.js";
 import { chatRoutes } from "./routes/chat.js";
 import { kbRoutes } from "./routes/kb.js";
+import { approvalRoutes } from "./routes/approvals.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -34,6 +35,7 @@ export async function buildApp() {
   await app.register(leadRoutes);
   await app.register(chatRoutes);
   await app.register(kbRoutes);
+  await app.register(approvalRoutes);
 
   return app;
 }

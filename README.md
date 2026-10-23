@@ -24,11 +24,12 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 
 | Path | What |
 |---|---|
-| `apps/api` | Fastify API, Prisma schema, auth/RBAC, routes |
+| `apps/api` | Fastify API, Prisma schema, auth/RBAC, routes, AI agent |
+| `apps/api/src/tools` | Tool registry shared by the chatbot and the MCP server |
+| `apps/api/src/mcp` | MCP server (stdio) for team members' AI assistants |
 | `apps/dashboard` | React dashboard (Step 6) |
 | `apps/widget` | Embeddable chat widget (plain JS, served by the API) |
 | `packages/shared` | Shared Zod schemas: `InboundEvent`, `TurnResult`, roles |
-| `packages/mcp-server` | MCP tool server (Step 4) |
 
 ## Getting started
 
@@ -61,6 +62,9 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 | POST | `/kb/documents` | admin — chunks + embeds a document |
 | DELETE | `/kb/documents/:id` | admin |
 | POST | `/kb/search` | logged in — shows what the bot would retrieve |
+| GET | `/approvals?status=` | logged in |
+| POST | `/approvals/:id/approve` | admin, agent — body `{ edits? }`; runs the action once |
+| POST | `/approvals/:id/reject` | admin, agent |
 
 ## How a chat turn works
 
@@ -70,6 +74,45 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 4. RAG: the message is embedded and the closest `KbChunk`s are fetched with pgvector.
 5. OpenAI (`gpt-4o-mini`) returns a **structured** `TurnResult` (reply, intent, extracted facts, hand-off flag).
 6. Facts are merged into the lead, `scoreLead()` re-scores it, and everything is saved in one transaction.
+
+## Tools, approvals and MCP
+
+All AI actions live in `src/tools/registry.ts`, each with a **risk level**:
+
+| Tool | Used by | Risk |
+|---|---|---|
+| `search_knowledge_base` | MCP | read |
+| `list_leads`, `get_lead` | MCP | read |
+| `update_lead_status` | MCP | write (admin/agent, audit-logged) |
+| `request_meeting` | chatbot | **approval** → `book_meeting` |
+| `send_email` | MCP | **approval** |
+
+"Approval" tools never act directly: they create a `PendingAction`. A human approves (optionally editing
+the payload) and only then does `src/lib/actions.ts` run it. Approval is claimed atomically, so an action
+can't run twice. Every chatbot tool call is stored in `ToolCall`; every human decision in `AuditLog`.
+
+Emails go through Resend when `RESEND_API_KEY` is set, otherwise to a dev outbox (logged, not sent).
+
+### Using the MCP server
+
+`npm run mcp:smoke -w @leadpilot/api` starts the server and exercises its tools.
+The server acts as `MCP_USER_EMAIL`, so that user's role applies (viewer = read-only, agent = own leads).
+To use it from Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "leadpilot": {
+      "command": "node",
+      "args": [
+        "C:/path/to/leadpilot/node_modules/tsx/dist/cli.mjs",
+        "--env-file=C:/path/to/leadpilot/apps/api/.env",
+        "C:/path/to/leadpilot/apps/api/src/mcp/server.ts"
+      ]
+    }
+  }
+}
+```
 
 ## Design decisions
 
@@ -84,8 +127,8 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 
 - [x] Step 1 – Foundation: monorepo, schema, auth/RBAC, leads API, seed
 - [x] Step 2 – AI chatbot, RAG, scoring, web widget
-- [ ] Step 3 – Channels: Messenger, Instagram, Lead Ads, LinkedIn mock, queue
-- [ ] Step 4 – MCP server + approval flow
+- [ ] Step 3 – Channels: Messenger, Instagram, Lead Ads, LinkedIn mock, queue (waiting on a Facebook Page)
+- [x] Step 4 – MCP server + approval flow
 - [ ] Step 5 – n8n workflows
 - [ ] Step 6 – Dashboard
 - [ ] Step 7 – Deploy, demo video

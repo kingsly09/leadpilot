@@ -1,12 +1,14 @@
-import { zodResponseFormat } from "openai/helpers/zod";
+import { zodFunction, zodResponseFormat } from "openai/helpers/zod";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { TurnResult, type Channel } from "@leadpilot/shared";
 import { db } from "./db.js";
 import { openai, CHAT_MODEL } from "./openai.js";
 import { searchKb } from "./kb.js";
 import { scoreLead } from "./scoring.js";
+import { runTool, toolsFor, type Actor } from "../tools/registry.js";
 
 const BUSINESS_NAME = "Brightwave Digital";
+const MAX_TOOL_STEPS = 3;
 
 const SYSTEM_PROMPT = `You are the friendly sales assistant for ${BUSINESS_NAME}, a digital agency.
 
@@ -18,6 +20,7 @@ Goals, in order:
 Rules:
 - Never offer discounts, refunds or custom deals; say pricing options are discussed with the team on the discovery call, then keep helping.
 - Set handoffToHuman=true ONLY if they explicitly ask for a human, are upset or complaining, or have a support problem you cannot help with. Questions about discounts or unknown details are NOT a reason to hand off.
+- When the customer asks to book a call and you know their email, call request_meeting. Then tell them a team member will confirm the time by email. Never claim the call is already confirmed.
 - In "extracted", fill only details the customer has actually stated anywhere in the conversation; use null otherwise.
 - confidence is 0–1: how sure you are about the intent.`;
 
@@ -94,14 +97,49 @@ export async function handleInbound(msg: InboundMessage): Promise<AgentResult> {
     ),
   ];
 
-  const completion = await openai.beta.chat.completions.parse({
-    model: CHAT_MODEL,
-    messages,
-    temperature: 0.4,
-    response_format: zodResponseFormat(TurnResult, "turn_result"),
-  });
+  // Tool loop: the model may call tools (e.g. request_meeting), see their results, then answer.
+  const actor: Actor = { type: "ai", conversationId: conversation.id, leadId: lead.id };
+  const agentTools = toolsFor("agent");
+  const toolParams = agentTools.map((t) => zodFunction({ name: t.name, description: t.description, parameters: t.input }));
+  const toolLog: Array<{ tool: string; input: unknown; output: unknown; status: string }> = [];
+  const usage = { in: 0, out: 0 };
+  let turn: TurnResult | null = null;
 
-  const turn = completion.choices[0]?.message.parsed;
+  for (let step = 0; step < MAX_TOOL_STEPS && !turn; step++) {
+    const completion = await openai.beta.chat.completions.parse({
+      model: CHAT_MODEL,
+      messages,
+      temperature: 0.4,
+      tools: toolParams,
+      response_format: zodResponseFormat(TurnResult, "turn_result"),
+    });
+    usage.in += completion.usage?.prompt_tokens ?? 0;
+    usage.out += completion.usage?.completion_tokens ?? 0;
+    const choice = completion.choices[0]?.message;
+    if (!choice) break;
+
+    if (!choice.tool_calls?.length) {
+      turn = choice.parsed;
+      break;
+    }
+
+    messages.push({ role: "assistant", content: choice.content, tool_calls: choice.tool_calls });
+    for (const call of choice.tool_calls) {
+      const def = agentTools.find((t) => t.name === call.function.name);
+      let output: unknown;
+      let status = "ok";
+      try {
+        if (!def) throw new Error(`Unknown tool ${call.function.name}`);
+        output = await runTool(def, call.function.parsed_arguments, actor);
+      } catch (err) {
+        status = "error";
+        output = { error: err instanceof Error ? err.message : String(err) };
+      }
+      toolLog.push({ tool: call.function.name, input: call.function.parsed_arguments, output, status });
+      messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(output) });
+    }
+  }
+
   if (!turn) throw new Error("Model returned no structured output");
 
   // Merge newly extracted facts into what we already know (never overwrite with null).
@@ -119,8 +157,16 @@ export async function handleInbound(msg: InboundMessage): Promise<AgentResult> {
         role: "assistant",
         content: turn.reply,
         meta: { ...turn, kbChunkIds: kbHits.map((h) => h.id), scoreReasons: score.reasons },
-        tokensIn: completion.usage?.prompt_tokens,
-        tokensOut: completion.usage?.completion_tokens,
+        tokensIn: usage.in,
+        tokensOut: usage.out,
+        toolCalls: {
+          create: toolLog.map((t) => ({
+            tool: t.tool,
+            input: (t.input ?? {}) as object,
+            output: t.output as object,
+            status: t.status,
+          })),
+        },
       },
     }),
     db.lead.update({

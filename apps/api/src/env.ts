@@ -8,6 +8,10 @@ const Env = z.object({
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
   OPENAI_API_KEY: z.string().optional(),
   REDIS_URL: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("LeadPilot <onboarding@resend.dev>"),
+  /** Which LeadPilot user the MCP server acts as; that user's role limits what MCP tools may do. */
+  MCP_USER_EMAIL: z.string().email().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
