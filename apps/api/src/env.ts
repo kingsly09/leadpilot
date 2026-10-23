@@ -12,6 +12,9 @@ const Env = z.object({
   EMAIL_FROM: z.string().default("LeadPilot <onboarding@resend.dev>"),
   /** Which LeadPilot user the MCP server acts as; that user's role limits what MCP tools may do. */
   MCP_USER_EMAIL: z.string().email().optional(),
+  /** n8n webhook that receives LeadPilot events; leave empty to disable automations. */
+  N8N_WEBHOOK_URL: z.string().url().optional().or(z.literal("").transform(() => undefined)),
+  N8N_WEBHOOK_SECRET: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 

@@ -126,7 +126,7 @@ export const tools: ToolDef[] = [
   {
     name: "request_meeting",
     description:
-      "Request a discovery call for the current customer. Use only when the customer asked to book a call and has given an email. A team member confirms it.",
+      "Request a discovery call for the current customer. ONLY call this after the customer explicitly asked for a call or meeting in the conversation; never just because they shared contact details. A team member confirms it.",
     // Chatbot tools use OpenAI strict mode: every field required, "optional" expressed as nullable.
     input: z.object({
       email: z.string().nullable().describe("The customer's email, if they gave it in this conversation"),

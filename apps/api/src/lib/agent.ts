@@ -6,6 +6,7 @@ import { openai, CHAT_MODEL } from "./openai.js";
 import { searchKb } from "./kb.js";
 import { scoreLead } from "./scoring.js";
 import { runTool, toolsFor, type Actor } from "../tools/registry.js";
+import { emitEvent } from "./events.js";
 
 const BUSINESS_NAME = "Brightwave Digital";
 const MAX_TOOL_STEPS = 3;
@@ -20,7 +21,7 @@ Goals, in order:
 Rules:
 - Never offer discounts, refunds or custom deals; say pricing options are discussed with the team on the discovery call, then keep helping.
 - Set handoffToHuman=true ONLY if they explicitly ask for a human, are upset or complaining, or have a support problem you cannot help with. Questions about discounts or unknown details are NOT a reason to hand off.
-- When the customer asks to book a call and you know their email, call request_meeting. Then tell them a team member will confirm the time by email. Never claim the call is already confirmed.
+- Call request_meeting ONLY when the customer has explicitly asked to book, schedule or have a call/meeting (e.g. "book a call", "can we talk Tuesday?") AND you know their email. Sharing an email or budget is NOT a request for a call: offer the call instead and wait for a yes. Then tell them a team member will confirm the time by email. Never claim the call is already confirmed.
 - In "extracted", fill only details the customer has actually stated anywhere in the conversation; use null otherwise.
 - confidence is 0–1: how sure you are about the intent.`;
 
@@ -57,11 +58,12 @@ async function resolveThread(msg: InboundMessage) {
     create: { contactId: contact.id, channel: msg.channel, externalThreadId: msg.externalThreadId },
   });
 
-  const lead =
-    (await db.lead.findFirst({
-      where: { contactId: contact.id, status: { notIn: ["WON", "LOST"] } },
-      orderBy: { createdAt: "desc" },
-    })) ?? (await db.lead.create({ data: { contactId: contact.id, source: msg.channel } }));
+  const existing = await db.lead.findFirst({
+    where: { contactId: contact.id, status: { notIn: ["WON", "LOST"] } },
+    orderBy: { createdAt: "desc" },
+  });
+  const lead = existing ?? (await db.lead.create({ data: { contactId: contact.id, source: msg.channel } }));
+  if (!existing) emitEvent("lead.created", lead.id);
 
   return { contact, conversation, lead };
 }
@@ -192,6 +194,10 @@ export async function handleInbound(msg: InboundMessage): Promise<AgentResult> {
       ? [db.conversation.update({ where: { id: conversation.id }, data: { aiEnabled: false } })]
       : []),
   ]);
+
+  // Events fire after the data is saved, so n8n sees the updated lead.
+  if (score.tier === "HOT" && lead.tier !== "HOT") emitEvent("lead.hot", lead.id, { reasons: score.reasons });
+  if (turn.handoffToHuman) emitEvent("handoff.requested", lead.id, { lastMessage: msg.text });
 
   return { reply: turn.reply, conversationId: conversation.id, leadId: lead.id, turn, score };
 }

@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import { sendEmail } from "./email.js";
+import { emitEvent } from "./events.js";
 
 /**
  * What actually happens once a human approves a PendingAction.
@@ -31,6 +32,7 @@ const executors: Record<string, Executor> = {
         },
       });
     }
+    emitEvent("meeting.booked", leadId, { meeting: when });
     return { meeting: when, email: email_ };
   },
 };

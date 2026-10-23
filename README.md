@@ -62,6 +62,8 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 | POST | `/kb/documents` | admin — chunks + embeds a document |
 | DELETE | `/kb/documents/:id` | admin |
 | POST | `/kb/search` | logged in — shows what the bot would retrieve |
+| GET | `/workflow-runs?status=` | logged in |
+| POST | `/workflow-runs/:id/retry` | admin |
 | GET | `/approvals?status=` | logged in |
 | POST | `/approvals/:id/approve` | admin, agent — body `{ edits? }`; runs the action once |
 | POST | `/approvals/:id/reject` | admin, agent |
@@ -114,6 +116,26 @@ To use it from Claude Desktop, add to `claude_desktop_config.json`:
 }
 ```
 
+## Automations (n8n)
+
+LeadPilot emits business events; n8n decides what to do with them, so automations change without code changes.
+
+| Event | When |
+|---|---|
+| `lead.created` | first message from a new person |
+| `lead.hot` | a lead's tier changes to HOT |
+| `handoff.requested` | the AI hands a conversation to a human |
+| `meeting.booked` | a human approves a `book_meeting` action |
+
+`src/lib/events.ts` stores each event as a `WorkflowRun`, POSTs it to `N8N_WEBHOOK_URL` with an
+`x-leadpilot-secret` header, retries network errors / 5xx with backoff (3 attempts, 4xx not retried) and
+records SUCCESS or FAILED with the error. Delivery happens in the background, so a broken automation never
+breaks a customer chat. `GET /workflow-runs` lists them and `POST /workflow-runs/:id/retry` (admin) re-sends a failed one.
+
+The **LeadPilot — Sales Alerts** n8n workflow verifies the secret, builds an alert for `lead.hot`,
+`handoff.requested` and `meeting.booked`, emails (Gmail) and messages (Telegram) the sales team with
+per-node retries, and answers LeadPilot with what was delivered. Other events are acknowledged and ignored.
+
 ## Design decisions
 
 - **LLM extracts, rules score.** The model returns structured facts (`TurnResult`); `lib/scoring.ts`
@@ -129,6 +151,6 @@ To use it from Claude Desktop, add to `claude_desktop_config.json`:
 - [x] Step 2 – AI chatbot, RAG, scoring, web widget
 - [ ] Step 3 – Channels: Messenger, Instagram, Lead Ads, LinkedIn mock, queue (waiting on a Facebook Page)
 - [x] Step 4 – MCP server + approval flow
-- [ ] Step 5 – n8n workflows
+- [x] Step 5 – n8n workflows
 - [ ] Step 6 – Dashboard
 - [ ] Step 7 – Deploy, demo video
