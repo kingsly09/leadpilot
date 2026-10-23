@@ -29,7 +29,8 @@ export const TurnResult = z.object({
     need: z.string().nullable(),
   }),
   handoffToHuman: z.boolean(),
-  confidence: z.number().min(0).max(1),
+  // 0..1 — kept as a plain number because OpenAI strict schemas reject min/max
+  confidence: z.number(),
 });
 export type TurnResult = z.infer<typeof TurnResult>;
 

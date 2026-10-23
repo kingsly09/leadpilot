@@ -1,0 +1,6 @@
+{
+  "name": "@leadpilot/widget",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Embeddable chat widget (plain JS, no build step). Served by the API at /widget/widget.js."
+}

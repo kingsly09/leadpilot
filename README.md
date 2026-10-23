@@ -26,7 +26,7 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 |---|---|
 | `apps/api` | Fastify API, Prisma schema, auth/RBAC, routes |
 | `apps/dashboard` | React dashboard (Step 6) |
-| `apps/widget` | Embeddable chat widget (Step 2) |
+| `apps/widget` | Embeddable chat widget (plain JS, served by the API) |
 | `packages/shared` | Shared Zod schemas: `InboundEvent`, `TurnResult`, roles |
 | `packages/mcp-server` | MCP tool server (Step 4) |
 
@@ -36,8 +36,11 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
    Supabase project and copy its connection string.
 2. `npm install`
 3. `cp apps/api/.env.example apps/api/.env` and fill in `DATABASE_URL` and `JWT_SECRET`.
-4. `npm run db:migrate` (creates tables) then `npm run db:seed` (demo users + sample leads).
+4. `npm run db:migrate` (creates tables), `npm run db:seed` (demo users + sample leads),
+   then `npm run db:seed-kb` (sample business knowledge base; needs `OPENAI_API_KEY`).
 5. `npm run dev:api` → http://localhost:4000/health
+6. Try the bot: http://localhost:4000/widget/demo.html
+7. `npm test` runs the unit tests.
 
 Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password are defined in
 `apps/api/prisma/seed.ts`.
@@ -52,6 +55,21 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 | GET | `/leads?tier=&status=` | admin/viewer: all · agent: assigned only |
 | GET | `/leads/:id` | same as above |
 | PATCH | `/leads/:id` | admin, agent (own leads); writes audit log |
+| POST | `/chat` | public (widget), rate-limited 20/min |
+| GET | `/chat/:sessionId/history` | public (widget) |
+| GET | `/kb/documents` | logged in |
+| POST | `/kb/documents` | admin — chunks + embeds a document |
+| DELETE | `/kb/documents/:id` | admin |
+| POST | `/kb/search` | logged in — shows what the bot would retrieve |
+
+## How a chat turn works
+
+1. Widget sends `{sessionId, message}` to `/chat`.
+2. `lib/agent.ts` finds or creates the Contact, Conversation and Lead, and stores the message.
+3. If a human has taken over (`aiEnabled = false`) the AI stays silent.
+4. RAG: the message is embedded and the closest `KbChunk`s are fetched with pgvector.
+5. OpenAI (`gpt-4o-mini`) returns a **structured** `TurnResult` (reply, intent, extracted facts, hand-off flag).
+6. Facts are merged into the lead, `scoreLead()` re-scores it, and everything is saved in one transaction.
 
 ## Design decisions
 
@@ -65,7 +83,7 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 ## Roadmap
 
 - [x] Step 1 – Foundation: monorepo, schema, auth/RBAC, leads API, seed
-- [ ] Step 2 – AI chatbot, RAG, scoring, web widget
+- [x] Step 2 – AI chatbot, RAG, scoring, web widget
 - [ ] Step 3 – Channels: Messenger, Instagram, Lead Ads, LinkedIn mock, queue
 - [ ] Step 4 – MCP server + approval flow
 - [ ] Step 5 – n8n workflows
