@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 *.log
+
+# Local env variants (never commit)
+.env.*
+!.env.example
