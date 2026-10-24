@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/server.ts",
-    "start": "node --env-file=.env dist/server.js",
+    "start": "tsx src/server.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate dev",
@@ -13,7 +13,8 @@
     "db:seed-kb": "tsx --env-file=.env prisma/seed-kb.ts",
     "test": "vitest run",
     "mcp": "tsx --env-file=.env src/mcp/server.ts",
-    "mcp:smoke": "tsx --env-file=.env scripts/mcp-smoke.ts"
+    "mcp:smoke": "tsx --env-file=.env scripts/mcp-smoke.ts",
+    "start:local": "tsx --env-file=.env src/server.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
@@ -27,14 +28,14 @@
     "fastify": "^5.2.1",
     "fastify-plugin": "^5.0.1",
     "openai": "^4.104.0",
+    "prisma": "^6.16.0",
+    "tsx": "^4.19.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.0",
     "pino-pretty": "^13.0.0",
-    "prisma": "^6.16.0",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.9"
   }

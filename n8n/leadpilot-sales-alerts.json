@@ -1,0 +1,143 @@
+{
+  "name": "LeadPilot — Sales Alerts",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "leadpilot-events", "responseMode": "responseNode", "options": {} },
+      "name": "LeadPilot Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 304]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.headers[\"x-leadpilot-secret\"] }}",
+              "operator": { "type": "string", "operation": "equals" },
+              "rightValue": "REPLACE_WITH_N8N_WEBHOOK_SECRET"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [224, 304]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "event", "name": "event", "value": "={{ $json.body?.event ?? \"\" }}", "type": "string" },
+            { "id": "leadId", "name": "leadId", "value": "={{ $json.body?.lead?.id ?? \"\" }}", "type": "string" },
+            { "id": "name", "name": "name", "value": "={{ ($json.body?.lead?.name || \"Unknown\").replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "contact", "name": "contact", "value": "={{ ($json.body?.lead?.email || $json.body?.lead?.phone || \"no contact yet\").replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "tier", "name": "tier", "value": "={{ $json.body?.lead?.tier ?? \"\" }}", "type": "string" },
+            { "id": "score", "name": "score", "value": "={{ $json.body?.lead?.score ?? 0 }}", "type": "number" },
+            { "id": "source", "name": "source", "value": "={{ $json.body?.lead?.source ?? \"\" }}", "type": "string" },
+            { "id": "need", "name": "need", "value": "={{ ($json.body?.lead?.fields?.need || \"not stated\").replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "budget", "name": "budget", "value": "={{ ($json.body?.lead?.fields?.budget || \"not stated\").replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "timeline", "name": "timeline", "value": "={{ ($json.body?.lead?.fields?.timeline || \"not stated\").replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "extra", "name": "extra", "value": "={{ ($json.body?.details?.meeting ? \"Meeting: \" + $json.body.details.meeting : ($json.body?.details?.lastMessage ? \"Last message: \" + $json.body.details.lastMessage : \"\")).replace(/[<>&]/g, \"\") }}", "type": "string" },
+            { "id": "title", "name": "title", "value": "={{ ({ \"lead.hot\": \"🔥 New HOT lead\", \"handoff.requested\": \"🙋 Customer needs a human\", \"meeting.booked\": \"📅 Meeting booked\" })[$json.body?.event] ?? \"\" }}", "type": "string" },
+            { "id": "isAlert", "name": "isAlert", "value": "={{ [\"lead.hot\", \"handoff.requested\", \"meeting.booked\"].includes($json.body?.event) }}", "type": "boolean" }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Build Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [464, 208]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            { "leftValue": "={{ $json.isAlert }}", "operator": { "type": "boolean", "operation": "true", "singleValue": true }, "rightValue": "" }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Needs Alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [688, 208]
+    },
+    {
+      "parameters": {
+        "sendTo": "sales-team@example.com",
+        "subject": "={{ $json.title }}: {{ $json.name }} ({{ $json.tier }} {{ $json.score }})",
+        "message": "=<h2>{{ $json.title }}</h2><p><b>{{ $json.name }}</b> · {{ $json.contact }} · via {{ $json.source }}</p><ul><li><b>Need:</b> {{ $json.need }}</li><li><b>Budget:</b> {{ $json.budget }}</li><li><b>Timeline:</b> {{ $json.timeline }}</li><li><b>Score:</b> {{ $json.tier }} ({{ $json.score }})</li></ul><p>{{ $json.extra }}</p><p style=\"color:#666\">Lead ID: {{ $json.leadId }}. Open the LeadPilot dashboard to reply or approve actions.</p>",
+        "options": { "appendAttribution": false, "senderName": "LeadPilot Alerts" }
+      },
+      "name": "Email Sales Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [928, 112],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "REPLACE_WITH_TELEGRAM_CHAT_ID",
+        "text": "=<b>{{ $(\"Build Alert\").item.json.title }}</b>\n{{ $(\"Build Alert\").item.json.name }} · {{ $(\"Build Alert\").item.json.contact }}\nNeed: {{ $(\"Build Alert\").item.json.need }}\nBudget: {{ $(\"Build Alert\").item.json.budget }} · Timeline: {{ $(\"Build Alert\").item.json.timeline }}\nScore: {{ $(\"Build Alert\").item.json.tier }} ({{ $(\"Build Alert\").item.json.score }}) via {{ $(\"Build Alert\").item.json.source }}\n{{ $(\"Build Alert\").item.json.extra }}",
+        "additionalFields": { "appendAttribution": false, "parse_mode": "HTML" }
+      },
+      "name": "Telegram Sales Team",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1152, 112],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: !!($('Email Sales Team').item.json.id || $json.ok), event: $('Build Alert').item.json.event, email: $('Email Sales Team').item.json.id ? 'sent' : ('failed: ' + ($('Email Sales Team').item.json.error || 'unknown')), telegram: $json.ok ? 'sent' : 'not sent' } }}",
+        "options": { "responseCode": "={{ ($('Email Sales Team').item.json.id || $json.ok) ? 200 : 502 }}" }
+      },
+      "name": "Respond Delivered",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1360, 112]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ { ok: true, ignored: true, event: $json.event } }}", "options": { "responseCode": 200 } },
+      "name": "Respond Ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [928, 320]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "{ \"ok\": false, \"error\": \"invalid secret\" }", "options": { "responseCode": 401 } },
+      "name": "Respond Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [464, 448]
+    }
+  ],
+  "connections": {
+    "LeadPilot Event": { "main": [[{ "node": "Verify Secret", "type": "main", "index": 0 }]] },
+    "Verify Secret": {
+      "main": [[{ "node": "Build Alert", "type": "main", "index": 0 }], [{ "node": "Respond Unauthorized", "type": "main", "index": 0 }]]
+    },
+    "Build Alert": { "main": [[{ "node": "Needs Alert?", "type": "main", "index": 0 }]] },
+    "Needs Alert?": {
+      "main": [[{ "node": "Email Sales Team", "type": "main", "index": 0 }], [{ "node": "Respond Ignored", "type": "main", "index": 0 }]]
+    },
+    "Email Sales Team": { "main": [[{ "node": "Telegram Sales Team", "type": "main", "index": 0 }]] },
+    "Telegram Sales Team": { "main": [[{ "node": "Respond Delivered", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

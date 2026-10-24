@@ -30,6 +30,7 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 | `apps/dashboard` | React + Vite + Tailwind dashboard (TanStack Query, Recharts) |
 | `apps/widget` | Embeddable chat widget (plain JS, served by the API) |
 | `packages/shared` | Shared Zod schemas: `InboundEvent`, `TurnResult`, roles |
+| `n8n/` | Exported n8n workflow (secrets removed) |
 
 ## Getting started
 
@@ -39,7 +40,7 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 3. `cp apps/api/.env.example apps/api/.env` and fill in `DATABASE_URL` and `JWT_SECRET`.
 4. `npm run db:migrate` (creates tables), `npm run db:seed` (demo users + sample leads),
    then `npm run db:seed-kb` (sample business knowledge base; needs `OPENAI_API_KEY`).
-5. `npm run dev:api` → http://localhost:4000/health, and `npm run dev:dashboard` → http://localhost:5173
+5. `npm run dev:api` → http://localhost:4000/health, and `npm run dev:dashboard` → http://localhost:5173/app/
 6. Try the bot: http://localhost:4000/widget/demo.html
 7. `npm test` runs the unit tests.
 
@@ -156,6 +157,26 @@ breaks a customer chat. `GET /workflow-runs` lists them and `POST /workflow-runs
 The **LeadPilot — Sales Alerts** n8n workflow verifies the secret, builds an alert for `lead.hot`,
 `handoff.requested` and `meeting.booked`, emails (Gmail) and messages (Telegram) the sales team with
 per-node retries, and answers LeadPilot with what was delivered. Other events are acknowledged and ignored.
+
+## Deployment (Railway)
+
+One service runs everything from the root `Dockerfile`: the API, the chat widget (`/widget/`) and the
+built dashboard (`/app/`, served by the API so it is same-origin). `/` redirects to `/app/`.
+
+Service variables:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | Supabase pooler URLs (see `apps/api/.env.example`) |
+| `JWT_SECRET` | long random string |
+| `OPENAI_API_KEY` | OpenAI key (set a spend limit on its project) |
+| `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | production webhook of the n8n workflow in `n8n/` |
+| `CORS_ORIGIN` | the service's own public URL |
+| `MCP_USER_EMAIL` | optional, only for running the MCP server |
+| `VITE_DEMO_PASSWORD` | optional, shows one-click demo logins on the sign-in page |
+
+Health check path: `/health`. The `/chat` endpoints accept any origin (the widget is embedded on other sites);
+every other endpoint only accepts `CORS_ORIGIN`.
 
 ## Design decisions
 

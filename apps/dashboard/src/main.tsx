@@ -28,7 +28,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/app">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route

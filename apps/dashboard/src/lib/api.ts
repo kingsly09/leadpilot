@@ -1,4 +1,6 @@
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:4000";
+// Dev: the API runs on :4000. Production: the API serves this app, so calls are same-origin.
+export const API_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) ?? (import.meta.env.DEV ? "http://localhost:4000" : "");
 
 const TOKEN_KEY = "leadpilot_token";
 
