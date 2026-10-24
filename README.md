@@ -4,6 +4,10 @@ AI-powered lead generation & automation platform: captures leads from social med
 qualifies them with an LLM + rule-based scoring, automates follow-ups with n8n, and gives the team
 a dashboard with human-in-the-loop approvals.
 
+**Live demo:** [Dashboard](https://leadpilotapi-production-24e7.up.railway.app/app/) ·
+[Chat widget on a sample business site](https://leadpilotapi-production-24e7.up.railway.app/widget/demo.html) ·
+[Health](https://leadpilotapi-production-24e7.up.railway.app/health)
+
 ## Architecture
 
 ```
@@ -195,4 +199,5 @@ every other endpoint only accepts `CORS_ORIGIN`.
 - [x] Step 4 – MCP server + approval flow
 - [x] Step 5 – n8n workflows
 - [x] Step 6 – Dashboard
-- [ ] Step 7 – Deploy, demo video
+- [x] Step 7 – Deploy (Railway, single Docker service)
+- [ ] Demo video
