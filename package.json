@@ -11,6 +11,7 @@
     "db:seed": "npm run db:seed -w @leadpilot/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:seed-kb": "npm run db:seed-kb -w @leadpilot/api",
-    "test": "npm test -w @leadpilot/api"
+    "test": "npm test -w @leadpilot/api",
+    "dev:dashboard": "npm run dev -w @leadpilot/dashboard"
   }
 }

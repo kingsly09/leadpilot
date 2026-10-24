@@ -12,6 +12,9 @@ import { chatRoutes } from "./routes/chat.js";
 import { kbRoutes } from "./routes/kb.js";
 import { approvalRoutes } from "./routes/approvals.js";
 import { workflowRunRoutes } from "./routes/workflow-runs.js";
+import { statsRoutes } from "./routes/stats.js";
+import { conversationRoutes } from "./routes/conversations.js";
+import { userRoutes } from "./routes/users.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -38,6 +41,9 @@ export async function buildApp() {
   await app.register(kbRoutes);
   await app.register(approvalRoutes);
   await app.register(workflowRunRoutes);
+  await app.register(statsRoutes);
+  await app.register(conversationRoutes);
+  await app.register(userRoutes);
 
   return app;
 }

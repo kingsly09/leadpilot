@@ -27,7 +27,7 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 | `apps/api` | Fastify API, Prisma schema, auth/RBAC, routes, AI agent |
 | `apps/api/src/tools` | Tool registry shared by the chatbot and the MCP server |
 | `apps/api/src/mcp` | MCP server (stdio) for team members' AI assistants |
-| `apps/dashboard` | React dashboard (Step 6) |
+| `apps/dashboard` | React + Vite + Tailwind dashboard (TanStack Query, Recharts) |
 | `apps/widget` | Embeddable chat widget (plain JS, served by the API) |
 | `packages/shared` | Shared Zod schemas: `InboundEvent`, `TurnResult`, roles |
 
@@ -39,7 +39,7 @@ React dashboard (leads, inbox, approvals, workflow logs, RBAC)
 3. `cp apps/api/.env.example apps/api/.env` and fill in `DATABASE_URL` and `JWT_SECRET`.
 4. `npm run db:migrate` (creates tables), `npm run db:seed` (demo users + sample leads),
    then `npm run db:seed-kb` (sample business knowledge base; needs `OPENAI_API_KEY`).
-5. `npm run dev:api` → http://localhost:4000/health
+5. `npm run dev:api` → http://localhost:4000/health, and `npm run dev:dashboard` → http://localhost:5173
 6. Try the bot: http://localhost:4000/widget/demo.html
 7. `npm test` runs the unit tests.
 
@@ -62,6 +62,12 @@ Demo accounts (`admin@`, `agent@`, `viewer@leadpilot.test`) and their password a
 | POST | `/kb/documents` | admin — chunks + embeds a document |
 | DELETE | `/kb/documents/:id` | admin |
 | POST | `/kb/search` | logged in — shows what the bot would retrieve |
+| GET | `/stats` | logged in — overview numbers and 14-day chart data |
+| GET | `/conversations?handedOff=` | logged in (agents: own leads) |
+| GET | `/conversations/:id` | messages with AI intent and tool calls |
+| POST | `/conversations/:id/ai` | admin, agent — `{ enabled }` take over / hand back |
+| POST | `/conversations/:id/messages` | admin, agent — team reply (pauses the AI) |
+| GET | `/users` | admin, agent — team list for assignment |
 | GET | `/workflow-runs?status=` | logged in |
 | POST | `/workflow-runs/:id/retry` | admin |
 | GET | `/approvals?status=` | logged in |
@@ -116,6 +122,21 @@ To use it from Claude Desktop, add to `claude_desktop_config.json`:
 }
 ```
 
+## Dashboard
+
+| Page | What it does |
+|---|---|
+| Overview | KPI tiles, new leads per day by tier, pipeline by status, leads by channel |
+| Leads | Search and filter; detail panel to change status, assign an owner, read the chat |
+| Inbox | All conversations; take over from the AI, reply as a human, hand back |
+| Approvals | Edit, approve or reject AI actions (meetings, emails); decision history |
+| Automations | n8n delivery log with errors and a Retry button (admin) |
+| Knowledge base | Add/delete business documents and test what the AI would retrieve |
+
+Roles are enforced by the API: viewers are read-only, agents only see their own leads and chats.
+The website widget polls its history every 5 seconds, so team replies from the Inbox reach the visitor.
+Set `VITE_DEMO_PASSWORD` in `apps/dashboard/.env` to show one-click demo logins on the sign-in page.
+
 ## Automations (n8n)
 
 LeadPilot emits business events; n8n decides what to do with them, so automations change without code changes.
@@ -152,5 +173,5 @@ per-node retries, and answers LeadPilot with what was delivered. Other events ar
 - [ ] Step 3 – Channels: Messenger, Instagram, Lead Ads, LinkedIn mock, queue (waiting on a Facebook Page)
 - [x] Step 4 – MCP server + approval flow
 - [x] Step 5 – n8n workflows
-- [ ] Step 6 – Dashboard
+- [x] Step 6 – Dashboard
 - [ ] Step 7 – Deploy, demo video

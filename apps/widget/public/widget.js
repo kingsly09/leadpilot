@@ -76,17 +76,40 @@
   }
 
   let loaded = false;
+  let sending = false;
+  let shown = -1; // number of server messages currently on screen
+
+  async function fetchHistory() {
+    const res = await fetch(`${API}/chat/${encodeURIComponent(sessionId)}/history`);
+    return res.ok ? res.json() : [];
+  }
+
+  function render(history) {
+    log.textContent = "";
+    if (!history.length) add("assistant", GREETING);
+    history.forEach((m) => add(m.role, m.content));
+    shown = history.length;
+  }
+
   async function loadHistory() {
     loaded = true;
     try {
-      const res = await fetch(`${API}/chat/${encodeURIComponent(sessionId)}/history`);
-      const history = res.ok ? await res.json() : [];
-      if (!history.length) add("assistant", GREETING);
-      history.forEach((m) => add(m.role, m.content));
+      render(await fetchHistory());
     } catch {
       add("assistant", GREETING);
     }
   }
+
+  // While the chat is open, check for replies typed by a team member in the dashboard.
+  setInterval(async () => {
+    if (!panel.classList.contains("open") || sending || !loaded) return;
+    try {
+      const history = await fetchHistory();
+      if (history.length !== shown) render(history);
+    } catch {
+      /* offline: try again on the next tick */
+    }
+  }, 5000);
 
   $(".bubble").onclick = () => {
     panel.classList.toggle("open");
@@ -101,6 +124,7 @@
     if (!text) return;
     input.value = "";
     add("user", text);
+    sending = true;
     send.disabled = true;
     const typing = add("note", "typing…");
     try {
@@ -117,6 +141,7 @@
       typing.remove();
       add("note", "Connection problem — please try again.");
     } finally {
+      sending = false;
       send.disabled = false;
       input.focus();
     }

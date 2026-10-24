@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens. Components use these roles, so light/dark swap in one place. */
+:root {
+  color-scheme: light;
+  --surface-0: #f6f6f4;
+  --surface-1: #ffffff;
+  --surface-2: #f0efec;
+  --border: #e3e2de;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+
+  /* Charts: single-series blue, and an ordinal blue ramp for lead tiers (darker = hotter). */
+  --series-1: #2a78d6;
+  --tier-cold: #86b6ef;
+  --tier-warm: #3987e5;
+  --tier-hot: #184f95;
+  --grid: #ecebe7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #242422;
+    --border: #2f2f2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --accent: #3987e5;
+    --accent-ink: #ffffff;
+
+    --series-1: #3987e5;
+    --tier-cold: #184f95;
+    --tier-warm: #2a78d6;
+    --tier-hot: #86b6ef;
+    --grid: #2a2a28;
+  }
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border p-4;
+    background: var(--surface-1);
+    border-color: var(--border);
+  }
+  .muted {
+    color: var(--text-muted);
+  }
+  .secondary {
+    color: var(--text-secondary);
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  .btn-ghost {
+    @apply border;
+    border-color: var(--border);
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+  .input {
+    @apply w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2;
+    background: var(--surface-1);
+    border-color: var(--border);
+    color: var(--text-primary);
+    --tw-ring-color: var(--accent);
+  }
+  .table-row:hover {
+    background: var(--surface-2);
+  }
+}
