@@ -212,4 +212,5 @@ every other endpoint only accepts `CORS_ORIGIN`.
 - [x] Step 5 – n8n workflows
 - [x] Step 6 – Dashboard
 - [x] Step 7 – Deploy (Railway, single Docker service)
-- [ ] Demo video
+- [x] Demo mode (one-click logins, nightly reset)
+- [ ] Demo video (script: `docs/demo-video-script.md`)
