@@ -18,9 +18,6 @@ RUN npm ci --include=dev
 COPY . .
 
 # Prisma client + dashboard build. The dashboard calls the API on the same origin.
-# Optional public-demo logins: set VITE_DEMO_PASSWORD as a Railway variable (exposed as a build arg).
-ARG VITE_DEMO_PASSWORD
-ENV VITE_DEMO_PASSWORD=$VITE_DEMO_PASSWORD
 RUN npx prisma generate --schema apps/api/prisma/schema.prisma \
     && npm run build -w @leadpilot/dashboard
 

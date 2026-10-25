@@ -16,6 +16,7 @@ import { workflowRunRoutes } from "./routes/workflow-runs.js";
 import { statsRoutes } from "./routes/stats.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { userRoutes } from "./routes/users.js";
+import { demoRoutes, scheduleNightlyDemoReset } from "./routes/demo.js";
 
 const WIDGET_DIR = fileURLToPath(new URL("../../widget/public", import.meta.url));
 const DASHBOARD_DIR = fileURLToPath(new URL("../../dashboard/dist", import.meta.url));
@@ -63,6 +64,8 @@ export async function buildApp() {
   await app.register(statsRoutes);
   await app.register(conversationRoutes);
   await app.register(userRoutes);
+  await app.register(demoRoutes);
+  scheduleNightlyDemoReset(app.log);
 
   return app;
 }

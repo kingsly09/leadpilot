@@ -140,7 +140,18 @@ To use it from Claude Desktop, add to `claude_desktop_config.json`:
 
 Roles are enforced by the API: viewers are read-only, agents only see their own leads and chats.
 The website widget polls its history every 5 seconds, so team replies from the Inbox reach the visitor.
-Set `VITE_DEMO_PASSWORD` in `apps/dashboard/.env` to show one-click demo logins on the sign-in page.
+### Demo mode
+
+With `DEMO_MODE=true` the deployment becomes a safe public demo:
+
+- the sign-in page offers one-click logins as Admin, Agent or Viewer (`GET /demo/config`)
+- the knowledge base is read-only (adding/deleting returns 403); "Test a question" still works
+- every night at 03:00 UTC, and on the admin's **Reset demo** button (`POST /demo/reset`), all leads,
+  chats, approvals and automation logs are replaced with a scripted story (`src/lib/demo-data.ts`):
+  12 leads across 5 channels and two weeks, two meetings awaiting approval, one chat waiting for a human,
+  and one failed alert to retry. Users and the knowledge base are kept.
+
+Locally: `npm run demo:reset -w @leadpilot/api`.
 
 ## Automations (n8n)
 
@@ -177,7 +188,8 @@ Service variables:
 | `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET` | production webhook of the n8n workflow in `n8n/` |
 | `CORS_ORIGIN` | the service's own public URL |
 | `MCP_USER_EMAIL` | optional, only for running the MCP server |
-| `VITE_DEMO_PASSWORD` | optional, shows one-click demo logins on the sign-in page |
+| `DEMO_MODE` | `true` on the public portfolio demo (see below) |
+| `DEMO_PASSWORD` | password of the demo accounts (shown on the sign-in page in demo mode) |
 
 Health check path: `/health`. The `/chat` endpoints accept any origin (the widget is embedded on other sites);
 every other endpoint only accepts `CORS_ORIGIN`.

@@ -14,7 +14,8 @@
     "test": "vitest run",
     "mcp": "tsx --env-file=.env src/mcp/server.ts",
     "mcp:smoke": "tsx --env-file=.env scripts/mcp-smoke.ts",
-    "start:local": "tsx --env-file=.env src/server.ts"
+    "start:local": "tsx --env-file=.env src/server.ts",
+    "demo:reset": "tsx --env-file=.env prisma/reset-demo.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",

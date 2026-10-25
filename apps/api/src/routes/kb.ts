@@ -2,6 +2,9 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import { db } from "../lib/db.js";
 import { ingestDocument, searchKb } from "../lib/kb.js";
+import { env } from "../env.js";
+
+const DEMO_LOCKED = { error: "The knowledge base is read-only in the public demo." };
 
 const DocBody = z.object({
   title: z.string().min(1).max(200),
@@ -15,6 +18,7 @@ export const kbRoutes: FastifyPluginAsync = async (app) => {
   );
 
   app.post("/kb/documents", { preHandler: app.requireRole("ADMIN") }, async (req, reply) => {
+    if (env.DEMO_MODE) return reply.code(403).send(DEMO_LOCKED);
     const body = DocBody.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: body.error.flatten() });
     const doc = await ingestDocument(body.data.title, body.data.content, body.data.source);
@@ -28,6 +32,7 @@ export const kbRoutes: FastifyPluginAsync = async (app) => {
     "/kb/documents/:id",
     { preHandler: app.requireRole("ADMIN") },
     async (req, reply) => {
+      if (env.DEMO_MODE) return reply.code(403).send(DEMO_LOCKED);
       const doc = await db.kbDocument.findUnique({ where: { id: req.params.id } });
       if (!doc) return reply.code(404).send({ error: "Not found" });
       await db.kbDocument.delete({ where: { id: doc.id } }); // chunks cascade

@@ -4,14 +4,32 @@
     {
       "name": "api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:api"],
+      "runtimeArgs": [
+        "run",
+        "dev:api"
+      ],
       "port": 4000
     },
     {
       "name": "dashboard",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:dashboard"],
+      "runtimeArgs": [
+        "run",
+        "dev:dashboard"
+      ],
       "port": 5173
+    },
+    {
+      "name": "api-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:api"
+      ],
+      "port": 4000,
+      "env": {
+        "DEMO_MODE": "true"
+      }
     }
   ]
 }

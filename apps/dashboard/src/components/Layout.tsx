@@ -1,9 +1,44 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, Users, MessagesSquare, ShieldCheck, Workflow, BookOpen, LogOut, Menu, X, Plane } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { LayoutDashboard, Users, MessagesSquare, ShieldCheck, Workflow, BookOpen, LogOut, Menu, X, Plane, RotateCcw, FlaskConical } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { api, type Stats } from "../lib/api";
+import { useDemoConfig } from "../lib/demo";
+
+/** Visible on the public demo: explains the data is fictional; admins can restore it. */
+function DemoBanner() {
+  const demo = useDemoConfig();
+  const { can } = useAuth();
+  const qc = useQueryClient();
+  const reset = useMutation({
+    mutationFn: () => api("/demo/reset", { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries(),
+  });
+  if (!demo.data?.demoMode) return null;
+  return (
+    <div
+      className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+      style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}
+      role="status"
+    >
+      <FlaskConical size={15} aria-hidden />
+      <span className="flex-1">
+        <b>Demo mode.</b> <span className="secondary">Fictional data for a sample agency. It resets every night.</span>
+      </span>
+      {can("ADMIN") && (
+        <button
+          className="btn btn-ghost"
+          disabled={reset.isPending}
+          onClick={() => confirm("Restore the demo data? Changes made since the last reset will be lost.") && reset.mutate()}
+        >
+          <RotateCcw size={14} className={reset.isPending ? "animate-spin" : ""} aria-hidden />
+          {reset.isSuccess ? "Demo restored" : "Reset demo"}
+        </button>
+      )}
+    </div>
+  );
+}
 
 const NAV = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
@@ -98,6 +133,7 @@ export function Layout() {
       )}
 
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <DemoBanner />
         <Outlet />
       </main>
     </div>

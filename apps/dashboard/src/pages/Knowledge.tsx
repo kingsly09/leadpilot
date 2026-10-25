@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Trash2, FileText } from "lucide-react";
 import { api, type KbDocument, type KbHit } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { useDemoConfig } from "../lib/demo";
 import { timeAgo } from "../lib/format";
 import { Empty, ErrorBox, Loading, PageHeader } from "../components/ui";
 
@@ -49,6 +50,8 @@ function AddDocument({ onDone }: { onDone: () => void }) {
 export function Knowledge() {
   const qc = useQueryClient();
   const { can } = useAuth();
+  const demoMode = useDemoConfig().data?.demoMode === true;
+  const canEdit = can("ADMIN") && !demoMode; // the public demo keeps its knowledge base intact
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const docs = useQuery({ queryKey: ["kb"], queryFn: () => api<KbDocument[]>("/kb/documents") });
@@ -62,9 +65,13 @@ export function Knowledge() {
     <>
       <PageHeader
         title="Knowledge base"
-        subtitle="What the AI knows about the business. It answers only from this."
+        subtitle={
+          demoMode
+            ? "What the AI knows about the business. Read-only in the demo, but you can test questions."
+            : "What the AI knows about the business. It answers only from this."
+        }
         actions={
-          can("ADMIN") && !adding ? (
+          canEdit && !adding ? (
             <button className="btn btn-primary" onClick={() => setAdding(true)}>
               <Plus size={15} aria-hidden /> Add information
             </button>
@@ -89,7 +96,7 @@ export function Knowledge() {
                     {d._count.chunks} passages · added {timeAgo(d.createdAt)}
                   </div>
                 </div>
-                {can("ADMIN") && (
+                {canEdit && (
                   <button
                     className="btn btn-ghost px-2"
                     aria-label={`Delete ${d.title}`}

@@ -16,6 +16,13 @@ const Env = z.object({
   N8N_WEBHOOK_URL: z.string().url().optional().or(z.literal("").transform(() => undefined)),
   N8N_WEBHOOK_SECRET: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  /** Public portfolio demo: one-click logins, protected knowledge base, nightly data reset. */
+  DEMO_MODE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  /** Shared password of the demo accounts; shown on the sign-in page only when DEMO_MODE=true. */
+  DEMO_PASSWORD: z.string().default("LeadPilot-demo-2026"),
 });
 
 const parsed = Env.safeParse(process.env);
