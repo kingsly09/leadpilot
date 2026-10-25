@@ -10,3 +10,6 @@ dist
 # Demo video: voice recordings and rendered output stay local
 video/audio/
 video/out/
+
+# Rendered demo video (large binary, share via YouTube/Drive instead)
+video/*.mp4
