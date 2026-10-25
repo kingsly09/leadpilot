@@ -200,9 +200,16 @@ const scenes = {
   } },
 
   9: { url: "/app/", async act(page) {
+    // Longer closing (about me): a slow tour of the overview, then the chat demo page.
     await sleep(1500);
     await glide(page, 440, 200, 50); await sleep(2500);
-    await glide(page, 800, 400, 50); await sleep(2500);
+    for (let i = 0; i < 5; i++) { await page.mouse.wheel(0, 120); await sleep(900); }
+    await sleep(2000);
+    for (let i = 0; i < 5; i++) { await page.mouse.wheel(0, -120); await sleep(700); }
+    await glide(page, 800, 300, 50); await sleep(2500);
+    await page.goto(`${BASE}/widget/demo.html`);
+    await sleep(1500);
+    await glide(page, 640, 260, 50); await sleep(2500);
   } },
 };
 

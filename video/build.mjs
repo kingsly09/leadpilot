@@ -11,21 +11,21 @@ const MAX_SPEEDUP = 1.4;
 const CAPTION_TOP = new Set([6]);
 const VOICE_DELAY = 0.35;
 
-// What was actually said, with the speech-to-text mishearings corrected.
+// What was actually said (take 2), with the speech-to-text mishearings corrected.
 const CAPTIONS = {
-  1: "Most businesses lose customers because nobody replies fast enough, especially at night and on weekends. So I built LeadPilot: an AI sales assistant that answers customers' questions 24/7, figures out who is ready to buy, and alerts the team instantly.",
-  2: "This is a sample business website with my chat assistant on it. A customer called Kemi asks about prices. The AI answers using only the business's own information, so it quotes the real price instead of making one up. As the chat goes on, it naturally collects her name, what she needs, her budget and her timeline. And when Kemi asks for a call, the AI does not pretend to book it. It requests the meeting, and tells her a team member will confirm.",
-  3: "Because Kemi shared a budget, a timeline and her email, she's recorded as a hot lead, and the sales team instantly gets an alert on Telegram and email. This alert runs through n8n, so the business can change who gets notified without even touching any code.",
-  4: "This is the team dashboard. At a glance, you can see new leads, hot leads, meetings, and everything waiting for a decision. In the leads list, Kemi is already at the top. The AI has pulled out everything from the conversation: what she needs, her budget, her timeline. Her score comes from clear business rules, not a guess, so you can always see why a lead is hot.",
-  5: "Important actions, like booking a meeting or sending an email, always wait for a human. Here, I can adjust the meeting time and approve it with one click. Kemi instantly gets a confirmation in her chat, her lead moves to meeting booked, and the decision is recorded.",
-  6: "If a customer is upset or asks for a real person, the AI hands the chat over and pauses itself. This conversation is flagged as needing a human. I can reply myself, and hand it back to the AI whenever I'm ready.",
-  7: "The AI's knowledge comes from the business's own documents, and it searches them by meaning, not just by keywords. And every automation is logged. If an alert ever fails, for example because an email account gets disconnected, you can see why and retry it with one click.",
-  8: "Under the hood, it's built with Node.js and TypeScript, OpenAI with tool calling, an MCP server so AI assistants can work with the data safely, n8n for the automations, Supabase for the database, and a React dashboard with role-based access, all deployed on Railway.",
-  9: "LeadPilot answers every lead in seconds, keeps people in control, and connects to the tools a business already uses. If you'd like something like this for your business, message me and let's talk business.",
+  1: "Hi! Most small businesses lose a lot of leads because nobody replies fast enough, especially at night and on weekends. So I built a system called LeadPilot: an AI sales assistant that answers your customers 24/7, figures out who is ready to buy, and alerts the team instantly.",
+  2: "This is a sample business website with my chat assistant on it. A customer called Kemi asks about prices. The AI answers using only the business's own information, so it quotes the real price instead of making one up. As the chat goes on, it naturally collects her name, what she needs, her budget and her timeline. When Kemi asks for a call, the AI does not pretend to book it. It requests the meeting and tells her a team member will confirm.",
+  3: "This is the instant alert. Because Kemi shared a budget, a short timeline and her email, she's scored as a hot lead, and the sales team instantly gets an alert on Telegram and email. This alert runs through n8n, so the business can change who gets notified without touching any code.",
+  4: "And here comes the team dashboard. At a glance, you can see new leads, hot leads, meetings, and everything waiting for a decision. In the leads list, Kemi is already at the top, and the AI pulls out everything from the conversation: what she needs, her budget, her timeline. Her score comes from clear business rules, not a guess, so you can always see why a lead is hot.",
+  5: "The next stage is human approval. Important actions, like booking a meeting or sending an email, always wait for a human. Here I can adjust the meeting time and approve it with just one click. Kemi instantly gets a confirmation in her chat, her lead moves to meeting booked, and the decision is recorded.",
+  6: "And when a customer needs a person: if a customer is upset or asks for a real person, the AI pauses itself and hands over to a human, and the conversation is flagged as needing a human. I can reply myself, and hand it back to the AI whenever I'm ready.",
+  7: "And the interesting part: the AI's knowledge comes from the business's own documents, and it searches them by meaning, not just keywords. And every automation is logged. If an alert ever fails, for example because an email account got disconnected, you can see why and retry it with one click. So even if you're not familiar with automations like this, it's easy to fix any error coming from the workflow.",
+  8: "And under the hood, it's built with Node.js and TypeScript, OpenAI with tool calling, an MCP server so AI assistants can work with the data safely, n8n for automations, Supabase for the database, and a React dashboard with role-based access. All deployed on Railway.",
+  9: "And LeadPilot answers every lead in seconds, keeps people in control, and connects to the tools a business already has. For over two years, I've worked as an executive HR assistant for US and Canada-based clients: CEOs, founders and coaches. I've also worked as a salesperson for US and Canada-based businesses. I've done this work repeatedly and manually, and I've learned how to make it disappear. So if you're looking for a business automation expert, please send me a message, and let's talk. Thank you so much."
 };
 const LABELS = {
   1: "The problem", 2: "A customer chats with the AI", 3: "Instant hot-lead alert", 4: "Team dashboard",
-  5: "Human approval", 6: "Hand-off to a human", 7: "Knowledge base & reliability", 8: "Under the hood", 9: "LeadPilot",
+  5: "Human approval", 6: "Hand-off to a human", 7: "Knowledge base & reliability", 8: "Under the hood", 9: "About me",
 };
 
 const run = (args) => {
