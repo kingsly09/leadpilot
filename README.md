@@ -4,9 +4,20 @@ AI-powered lead generation & automation platform: captures leads from social med
 qualifies them with an LLM + rule-based scoring, automates follow-ups with n8n, and gives the team
 a dashboard with human-in-the-loop approvals.
 
-**Live demo:** [Dashboard](https://leadpilotapi-production-24e7.up.railway.app/app/) ·
-[Chat widget on a sample business site](https://leadpilotapi-production-24e7.up.railway.app/widget/demo.html) ·
-[Health](https://leadpilotapi-production-24e7.up.railway.app/health)
+## Try it yourself (2 minutes, no sign-up)
+
+1. **Chat with the AI as a customer:** open the [sample business website](https://leadpilotapi-production-24e7.up.railway.app/widget/demo.html)
+   and click the 💬 bubble. Ask *"How much is a website?"*, share a budget and a timeline, then ask to book a call.
+   A made-up name and email are fine.
+2. **See what the business sees:** open the [dashboard](https://leadpilotapi-production-24e7.up.railway.app/app/) and click
+   **Admin** under *"Try the live demo as…"*. You'll find:
+   - your chat in **Inbox**, where you can take over from the AI and reply as a human
+   - your lead, scored **Hot / Warm / Cold**, in **Leads**
+   - your meeting request in **Approvals**. Approve it, and the confirmation appears back in your chat.
+3. Try the other roles: **Agent** only sees their own leads, **Viewer** is read-only.
+
+> This is a public demo with a fictional agency (Brightwave Digital). Data resets every night, and the
+> knowledge base is read-only. [Health check](https://leadpilotapi-production-24e7.up.railway.app/health)
 
 ## Architecture
 
