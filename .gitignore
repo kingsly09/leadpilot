@@ -6,3 +6,7 @@ dist
 # Local env variants (never commit)
 .env.*
 !.env.example
+
+# Demo video: voice recordings and rendered output stay local
+video/audio/
+video/out/

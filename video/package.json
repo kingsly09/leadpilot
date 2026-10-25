@@ -1,0 +1,13 @@
+{
+  "name": "leadpilot-demo-video",
+  "private": true,
+  "type": "module",
+  "description": "Automated screen recording of the LeadPilot demo (Playwright) and final edit (FFmpeg).",
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "playwright": "^1.49.1"
+  },
+  "allowScripts": {
+    "ffmpeg-static@5.2.0": true
+  }
+}
