@@ -4,6 +4,13 @@ AI-powered lead generation & automation platform: captures leads from social med
 qualifies them with an LLM + rule-based scoring, automates follow-ups with n8n, and gives the team
 a dashboard with human-in-the-loop approvals.
 
+## Watch the demo
+
+[![LeadPilot demo video: click to watch on YouTube](https://img.youtube.com/vi/Rq4VlumzauU/maxresdefault.jpg)](https://youtu.be/Rq4VlumzauU)
+
+▶️ **[Watch on YouTube](https://youtu.be/Rq4VlumzauU)** (about 4½ minutes): a customer chats with the AI, becomes a hot lead,
+the team gets a Telegram alert, approves the meeting, takes over a chat, and a look under the hood.
+
 ## Try it yourself (2 minutes, no sign-up)
 
 1. **Chat with the AI as a customer:** open the [sample business website](https://leadpilotapi-production-24e7.up.railway.app/widget/demo.html)
@@ -224,4 +231,4 @@ every other endpoint only accepts `CORS_ORIGIN`.
 - [x] Step 6 – Dashboard
 - [x] Step 7 – Deploy (Railway, single Docker service)
 - [x] Demo mode (one-click logins, nightly reset)
-- [ ] Demo video (script: `docs/demo-video-script.md`)
+- [x] Demo video ([YouTube](https://youtu.be/Rq4VlumzauU), script: `docs/demo-video-script.md`)
